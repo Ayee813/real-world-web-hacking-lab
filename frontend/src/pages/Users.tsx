@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Users as UsersIcon, Mail, Calendar, Pencil } from 'lucide-react';
+import { Users as UsersIcon, Mail, Calendar } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import { api } from '../lib/api';
 
@@ -65,7 +64,6 @@ export default function Users() {
                   <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     <span className="flex items-center gap-1"><Calendar size={12} /> Joined</span>
                   </th>
-                  <th className="px-5 py-3" />
                 </tr>
               </thead>
               <tbody>
@@ -88,15 +86,7 @@ export default function Users() {
                         month: 'short', day: 'numeric', year: 'numeric'
                       })}
                     </td>
-                    <td className="px-5 py-3.5 text-right">
-                      <Link
-                        to={`/profile/${user.id}`}
-                        className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-green-600 transition-colors"
-                      >
-                        <Pencil size={12} />
-                        Edit
-                      </Link>
-                    </td>
+                    <td className="px-5 py-3.5" />
                   </tr>
                 ))}
               </tbody>

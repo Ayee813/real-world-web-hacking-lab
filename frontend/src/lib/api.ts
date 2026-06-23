@@ -1,6 +1,6 @@
 import { getToken } from './auth';
 
-const BASE = 'http://localhost:3001/api';
+const BASE = '/api';
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken();
