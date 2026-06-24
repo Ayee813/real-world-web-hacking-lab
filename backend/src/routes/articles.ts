@@ -33,7 +33,24 @@ router.get('/articles', requireAuth, async (req: AuthRequest, res: Response): Pr
   }
 });
 
-router.get('/article/:id', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/articles/mine', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const result = await pool.query(
+      `SELECT a.id, a.title, a.body, a.is_public, a.created_at, u.username AS author, a.author_id
+       FROM articles a
+       JOIN users u ON a.author_id = u.id
+       WHERE a.author_id = $1
+       ORDER BY a.created_at DESC`,
+      [req.user!.id]
+    );
+    res.json(result.rows);
+  } catch {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// INTENTIONAL VULN: no ownership check — any authenticated user can fetch any article (IDOR)
+router.get('/articles/:id', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const result = await pool.query(
       `SELECT a.id, a.title, a.body, a.is_public, a.created_at, u.username AS author, a.author_id
@@ -70,7 +87,7 @@ router.post('/articles', requireAuth, async (req: AuthRequest, res: Response): P
   }
 });
 
-router.put('/article/:id', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
+router.put('/articles/:id', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   const { title, body, is_public } = req.body;
   try {
     const current = await pool.query('SELECT * FROM articles WHERE id = $1', [req.params.id]);
@@ -89,9 +106,14 @@ router.put('/article/:id', requireAuth, async (req: AuthRequest, res: Response):
   }
 });
 
-router.delete('/article/:id', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
+// INTENTIONAL VULN: no ownership check — any authenticated user can delete any article (IDOR)
+router.delete('/articles/:id', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    await pool.query('DELETE FROM articles WHERE id = $1', [req.params.id]);
+    const result = await pool.query('DELETE FROM articles WHERE id = $1 RETURNING id', [req.params.id]);
+    if (!result.rows[0]) {
+      res.status(404).json({ error: 'Article not found' });
+      return;
+    }
     res.json({ success: true });
   } catch {
     res.status(500).json({ error: 'Server error' });

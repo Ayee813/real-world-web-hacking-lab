@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { Calendar, User, ArrowLeft, Globe, Lock } from 'lucide-react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { Calendar, User, ArrowLeft, Globe, Lock, Trash2, Loader2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import { api } from '../lib/api';
 import { getUser } from '../lib/auth';
@@ -17,17 +17,34 @@ interface Article {
 
 export default function ArticleView() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   useEffect(() => {
     if (!id) return;
-    api.get<Article>(`/article/${id}`)
+    api.get<Article>(`/articles/${id}`)
       .then(setArticle)
       .catch(err => setError(err.message))
       .finally(() => setLoading(false));
   }, [id]);
+
+  async function handleDelete() {
+    if (!article) return;
+    if (!window.confirm('Delete this article? This cannot be undone.')) return;
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      await api.delete(`/articles/${article.id}`);
+      navigate('/dashboard');
+    } catch (err: any) {
+      setDeleteError(err.message || 'Failed to delete');
+      setDeleting(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -54,25 +71,44 @@ export default function ArticleView() {
 
         {article && (() => {
           const currentUser = getUser();
-          const isOwner = currentUser?.id === article.author_id;
+          // Frontend-only ownership check. Backend has no ownership check (intentional IDOR vuln).
+          const isOwner = currentUser != null && String(currentUser.id) === String(article.author_id);
           const canRead = article.is_public || isOwner;
 
           return (
             <article className="bg-white rounded-xl border border-gray-200 p-8 shadow-sm">
               <div className="mb-6">
-                <div className="flex items-center gap-2 mb-3">
-                  {article.is_public ? (
-                    <span className="inline-flex items-center gap-1 text-xs bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full">
-                      <Globe size={11} />
-                      Public
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-500 border border-gray-200 px-2 py-0.5 rounded-full">
-                      <Lock size={11} />
-                      Private
-                    </span>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    {article.is_public ? (
+                      <span className="inline-flex items-center gap-1 text-xs bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full">
+                        <Globe size={11} />
+                        Public
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-500 border border-gray-200 px-2 py-0.5 rounded-full">
+                        <Lock size={11} />
+                        Private
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Delete button — shown only to the owner (frontend-only guard) */}
+                  {isOwner && (
+                    <button
+                      onClick={handleDelete}
+                      disabled={deleting}
+                      className="inline-flex items-center gap-1.5 text-sm text-red-500 hover:text-red-700 hover:bg-red-50 border border-red-200 px-3 py-1 rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                      {deleting ? 'Deleting…' : 'Delete'}
+                    </button>
                   )}
                 </div>
+
+                {deleteError && (
+                  <p className="text-sm text-red-600 mb-3">{deleteError}</p>
+                )}
 
                 <h1 className="text-2xl font-bold text-gray-900 mb-4">{article.title}</h1>
 
