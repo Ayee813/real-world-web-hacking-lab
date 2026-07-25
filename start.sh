@@ -14,12 +14,22 @@ cleanup() {
 }
 trap cleanup INT TERM
 
-echo "Starting backend..."
-cd "$ROOT/backend" && npm run dev &
+# Detect package manager
+PM="npm"
+if [[ "$npm_execpath" == *"pnpm"* ]]; then
+  PM="pnpm"
+elif [ -f "$ROOT/pnpm-lock.yaml" ]; then
+  PM="pnpm"
+elif [[ "$npm_execpath" == *"yarn"* ]]; then
+  PM="yarn"
+fi
+
+echo "Starting backend using $PM..."
+cd "$ROOT/backend" && $PM run dev &
 BACKEND_PID=$!
 
-echo "Starting frontend..."
-cd "$ROOT/frontend" && npm run dev &
+echo "Starting frontend using $PM..."
+cd "$ROOT/frontend" && $PM run dev &
 FRONTEND_PID=$!
 
 echo "Waiting for frontend to be ready..."

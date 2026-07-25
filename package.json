@@ -1,0 +1,14 @@
+{
+  "name": "real-web-hacking-lab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Real Web Hacking Lab root workspace",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "start": "./start.sh",
+    "dev": "./start.sh"
+  }
+}

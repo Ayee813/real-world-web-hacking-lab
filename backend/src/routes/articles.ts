@@ -71,7 +71,7 @@ router.get('/articles/:id', requireAuth, async (req: AuthRequest, res: Response)
 
 // INTENTIONAL VULN: stores raw HTML without sanitization (stored XSS)
 router.post('/articles', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
-  const { title, body, is_public } = req.body;
+  const { title, body, is_public } = req.body ?? {};
   if (!title || !body) {
     res.status(400).json({ error: 'Title and body are required' });
     return;
@@ -88,7 +88,7 @@ router.post('/articles', requireAuth, async (req: AuthRequest, res: Response): P
 });
 
 router.put('/articles/:id', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
-  const { title, body, is_public } = req.body;
+  const { title, body, is_public } = req.body ?? {};
   try {
     const current = await pool.query('SELECT * FROM articles WHERE id = $1', [req.params.id]);
     if (!current.rows[0]) {
