@@ -19,7 +19,9 @@ export default function Login() {
     try {
       const data = await api.post<{ token: string; user: User }>('/auth/login', { email, password });
       saveSession(data.token, data.user);
-      navigate(data.user.role === 'admin' ? '/admin' : '/dashboard');
+      if (data.user.role === 'analyst') navigate('/siem');
+      else if (data.user.role === 'admin') navigate('/admin');
+      else navigate('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Login failed');
     } finally {

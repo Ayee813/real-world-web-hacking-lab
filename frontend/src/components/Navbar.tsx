@@ -1,6 +1,6 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { PenLine, Users, LayoutDashboard, ShieldCheck, LogOut } from 'lucide-react';
-import { getUser, clearSession } from '../lib/auth';
+import { PenLine, Users, LayoutDashboard, ShieldCheck, LogOut, Radar } from 'lucide-react';
+import { getUser, clearSession, hasSiemAccess } from '../lib/auth';
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -45,6 +45,12 @@ export default function Navbar() {
               <Users size={15} />
               Members
             </Link>
+            {hasSiemAccess(user) && (
+              <Link to="/siem" className={linkClass('/siem')}>
+                <Radar size={15} />
+                SIEM
+              </Link>
+            )}
             {user?.role === 'admin' && (
               <Link to="/admin" className={linkClass('/admin')}>
                 <ShieldCheck size={15} />

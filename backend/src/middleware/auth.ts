@@ -20,3 +20,21 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
     res.status(401).json({ error: 'Invalid token' });
   }
 }
+
+export function requireAdmin(req: AuthRequest, res: Response, next: NextFunction): void {
+  if (req.user?.role !== 'admin') {
+    res.status(403).json({ error: 'Admin access required' });
+    return;
+  }
+  next();
+}
+
+// SIEM dashboard: admins have full control, analysts get investigate/respond
+// access (logs, alerts, cases, reports) but not rule/threat-intel/retention config.
+export function requireSiemAccess(req: AuthRequest, res: Response, next: NextFunction): void {
+  if (req.user?.role !== 'admin' && req.user?.role !== 'analyst') {
+    res.status(403).json({ error: 'SIEM access required' });
+    return;
+  }
+  next();
+}

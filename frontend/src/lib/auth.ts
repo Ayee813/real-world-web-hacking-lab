@@ -2,7 +2,11 @@ export interface User {
   id: string;
   email: string;
   username: string;
-  role: 'user' | 'admin';
+  role: 'user' | 'admin' | 'analyst';
+}
+
+export function hasSiemAccess(user: User | null): boolean {
+  return user?.role === 'admin' || user?.role === 'analyst';
 }
 
 export function getToken(): string | null {
